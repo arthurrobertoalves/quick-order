@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentMethod {
+  PIX
+  CARD
+  CASH
+}
+
+enum OrderItemType {
+  PRODUCT
+  COMBO
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  active      Boolean  @default(true)
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // Optional pointer to a bigger/upgraded version of this product (e.g. small fries -> medium fries),
+  // used to power the "upsize" upsell suggestion.
+  upgradeToProductId Int?
+  upgradeTo           Product?  @relation("ProductUpgrade", fields: [upgradeToProductId], references: [id])
+  upgradedBy           Product[] @relation("ProductUpgrade")
+
+  comboItems ComboItem[]
+  orderItems OrderItem[]
+}
+
+model Combo {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  active      Boolean  @default(true)
+
+  items      ComboItem[]
+  orderItems OrderItem[]
+}
+
+model ComboItem {
+  id       Int @id @default(autoincrement())
+  quantity Int @default(1)
+
+  comboId Int
+  combo   Combo @relation(fields: [comboId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([comboId, productId])
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  customerName  String
+  paymentMethod PaymentMethod
+  total         Decimal       @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id        Int           @id @default(autoincrement())
+  type      OrderItemType
+  quantity  Int
+  unitPrice Decimal       @db.Decimal(10, 2)
+  subtotal  Decimal       @db.Decimal(10, 2)
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  comboId Int?
+  combo   Combo? @relation(fields: [comboId], references: [id])
+}
