@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/contexts/cart-context";
 import { SuggestionDialog } from "@/components/totem/suggestion-dialog";
 import { Toaster } from "@/components/ui/sonner";
+import { KioskShell } from "@/components/totem/kiosk-shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +15,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport = { width: "device-width", initialScale: 1, maximumScale: 1 };
 
 export const metadata: Metadata = {
   title: "Quick Order - Totem de Autoatendimento",
@@ -28,9 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <CartProvider>
-          {children}
+          <KioskShell>{children}</KioskShell>
           <SuggestionDialog />
-          <Toaster />
+          <Toaster position="top-center" />
         </CartProvider>
       </body>
     </html>

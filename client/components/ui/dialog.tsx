@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { useKioskContainer } from "@/components/totem/kiosk-portal"
 
 function Dialog({
   ...props
@@ -20,9 +21,17 @@ function DialogTrigger({
 }
 
 function DialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+  const kioskContainer = useKioskContainer()
+  return (
+    <DialogPrimitive.Portal
+      data-slot="dialog-portal"
+      container={container ?? kioskContainer ?? undefined}
+      {...props}
+    />
+  )
 }
 
 function DialogClose({

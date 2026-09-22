@@ -5,6 +5,7 @@ import { cn } from "cn"
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
+import { useKioskContainer } from "@/components/totem/kiosk-portal"
 
 function AlertDialog({
   ...props
@@ -21,10 +22,16 @@ function AlertDialogTrigger({
 }
 
 function AlertDialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+  const kioskContainer = useKioskContainer()
   return (
-    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+    <AlertDialogPrimitive.Portal
+      data-slot="alert-dialog-portal"
+      container={container ?? kioskContainer ?? undefined}
+      {...props}
+    />
   )
 }
 
