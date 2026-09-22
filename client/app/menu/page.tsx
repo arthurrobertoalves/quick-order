@@ -1,74 +1,86 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SiteHeader } from "@/components/totem/site-header";
 import { ProductCard } from "@/components/totem/product-card";
 import { ComboCard } from "@/components/totem/combo-card";
+import { CartBar } from "@/components/totem/cart-sheet";
 import { useCart } from "@/contexts/cart-context";
-import type { CategorySlug } from "@/lib/types";
+import { CATEGORY_VISUALS } from "@/lib/visuals";
 
-const TABS: { value: CategorySlug | "combos"; label: string }[] = [
-  { value: "combos", label: "Combos" },
-  { value: "lanches", label: "Lanches" },
-  { value: "acompanhamentos", label: "Acompanhamentos" },
-  { value: "bebidas", label: "Bebidas" },
-  { value: "sobremesas", label: "Sobremesas" },
-];
+const VALID = CATEGORY_VISUALS.map((c) => c.slug);
 
 function MenuContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") ?? "lanches";
-  const [tab, setTab] = useState(initialTab);
+  const requested = searchParams.get("tab") ?? "lanches";
+  const [tab, setTab] = useState(VALID.includes(requested) ? requested : "lanches");
   const { catalog } = useCart();
+  const scroller = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
+  const current = CATEGORY_VISUALS.find((c) => c.slug === tab)!;
 
   return (
-    <main className="flex flex-1 flex-col">
-      <SiteHeader />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 sm:px-6">
-        <Tabs value={tab} onValueChange={setTab} className="flex-1">
-          <TabsList className="flex w-full justify-start gap-1 overflow-x-auto">
-            {TABS.map((t) => (
-              <TabsTrigger key={t.value} value={t.value} className="shrink-0 py-2">
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+    <main className="flex min-h-0 flex-1 flex-col">
+      <SiteHeader step={1} />
+      <Tabs value={tab} onValueChange={setTab} className="min-h-0 flex-1 gap-0">
+        <TabsList className="no-scrollbar bg-muted !h-auto w-full shrink-0 justify-start gap-2 overflow-x-auto rounded-none p-2">
+          {CATEGORY_VISUALS.map((c) => (
+            <TabsTrigger
+              key={c.slug}
+              value={c.slug}
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-auto min-w-[5.2rem] shrink-0 flex-col gap-0.5 rounded-2xl px-3 py-2 text-sm font-bold data-[state=active]:shadow-md"
+            >
+              <span className="text-3xl leading-none">{c.emoji}</span>
+              {c.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <h2 className="mb-3 text-2xl font-black">
+            {current.emoji} {current.label}
+          </h2>
 
           {catalog.loading ? (
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-48 w-full" />
+                <Skeleton key={i} className="h-64 rounded-3xl" />
               ))}
             </div>
+          ) : catalog.products.length === 0 ? (
+            <p className="text-muted-foreground py-10 text-center">
+              Não foi possível carregar o cardápio. Chame um atendente.
+            </p>
           ) : (
             <>
-              <TabsContent value="combos" className="mt-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {catalog.combos.map((combo) => (
-                    <ComboCard key={combo.id} combo={combo} />
-                  ))}
-                </div>
+              <TabsContent value="combos" className="flex flex-col gap-3">
+                {catalog.combos.map((combo, i) => (
+                  <ComboCard key={combo.id} combo={combo} index={i} />
+                ))}
               </TabsContent>
-              {(["lanches", "acompanhamentos", "bebidas", "sobremesas"] as CategorySlug[]).map(
-                (slug) => (
-                  <TabsContent key={slug} value={slug} className="mt-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {catalog.products
-                        .filter((p) => p.category.slug === slug)
-                        .map((product) => (
-                          <ProductCard key={product.id} product={product} />
-                        ))}
-                    </div>
-                  </TabsContent>
-                ),
-              )}
+              {CATEGORY_VISUALS.filter((c) => c.slug !== "combos").map((c) => (
+                <TabsContent key={c.slug} value={c.slug}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {catalog.products
+                      .filter((p) => p.category.slug === c.slug)
+                      .map((product, i) => (
+                        <ProductCard key={product.id} product={product} index={i} />
+                      ))}
+                  </div>
+                </TabsContent>
+              ))}
             </>
           )}
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
+      <CartBar onJump={setTab} />
     </main>
   );
 }

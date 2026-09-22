@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -12,12 +11,13 @@ import { SiteHeader } from "@/components/totem/site-header";
 import { useCart } from "@/contexts/cart-context";
 import { formatCurrency } from "@/lib/format";
 import { ApiError, api } from "@/lib/api";
+import { productEmoji } from "@/lib/visuals";
 import type { PaymentMethod } from "@/lib/types";
 
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: "PIX", label: "Pix" },
-  { value: "CARD", label: "Cartão" },
-  { value: "CASH", label: "Dinheiro" },
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; emoji: string }[] = [
+  { value: "PIX", label: "Pix", emoji: "💠" },
+  { value: "CARD", label: "Cartão", emoji: "💳" },
+  { value: "CASH", label: "Dinheiro", emoji: "💵" },
 ];
 
 export default function CheckoutPage() {
@@ -59,11 +59,7 @@ export default function CheckoutPage() {
       const order = await api.createOrder({
         customerName: customerName.trim(),
         paymentMethod: paymentMethod as PaymentMethod,
-        items: lines.map((line) => ({
-          type: line.type,
-          id: line.id,
-          quantity: line.quantity,
-        })),
+        items: lines.map((line) => ({ type: line.type, id: line.id, quantity: line.quantity })),
       });
       orderPlaced.current = true;
       clear();
@@ -80,49 +76,54 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col">
-      <SiteHeader />
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
-        <h1 className="text-2xl font-bold">Finalizar pedido</h1>
+    <main className="flex min-h-0 flex-1 flex-col">
+      <SiteHeader step={2} backHref="/menu" backLabel="Cardápio" />
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5">
+          <h1 className="text-3xl font-black">Quase lá! 🎉</h1>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Resumo do pedido</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {lines.map((line) => (
-              <div key={line.key} className="flex justify-between text-sm">
-                <span>
-                  {line.name} x{line.quantity}
-                </span>
-                <span>{formatCurrency(line.unitPrice * line.quantity)}</span>
-              </div>
-            ))}
-            <Separator className="my-2" />
-            <div className="flex justify-between text-lg font-semibold">
+          <section className="bg-card rounded-3xl border p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-extrabold">Resumo do pedido</h2>
+            <ul className="space-y-2">
+              {lines.map((line) => (
+                <li key={line.key} className="flex items-center gap-3">
+                  <span className="text-2xl">
+                    {line.type === "COMBO" ? "🔥" : productEmoji(line.name, line.categorySlug)}
+                  </span>
+                  <span className="flex-1 text-base font-semibold">
+                    {line.quantity}x {line.name}
+                  </span>
+                  <span className="font-bold">{formatCurrency(line.unitPrice * line.quantity)}</span>
+                </li>
+              ))}
+            </ul>
+            <Separator className="my-3" />
+            <div className="flex items-center justify-between text-2xl font-black">
               <span>Total</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span className="text-red-600">{formatCurrency(subtotal)}</span>
             </div>
-          </CardContent>
-        </Card>
+          </section>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="customerName">Nome</Label>
+          <section className="space-y-2">
+            <Label htmlFor="customerName" className="text-lg font-extrabold">
+              Seu nome
+            </Label>
             <Input
               id="customerName"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Como podemos te chamar?"
+              autoComplete="off"
+              className="h-14 rounded-2xl px-4 text-lg"
               aria-invalid={Boolean(errors.customerName)}
             />
             {errors.customerName && (
-              <p className="text-destructive text-sm">{errors.customerName}</p>
+              <p className="text-destructive text-sm font-semibold">{errors.customerName}</p>
             )}
-          </div>
+          </section>
 
-          <div className="space-y-2">
-            <Label>Forma de pagamento</Label>
+          <section className="space-y-2">
+            <Label className="text-lg font-extrabold">Como vai pagar?</Label>
             <RadioGroup
               value={paymentMethod}
               onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
@@ -132,25 +133,38 @@ export default function CheckoutPage() {
                 <Label
                   key={method.value}
                   htmlFor={method.value}
-                  className="flex items-center justify-center gap-2 rounded-md border p-3 text-sm has-[[data-state=checked]]:border-primary"
+                  className="has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-red-50 bg-card flex cursor-pointer flex-col items-center gap-1 rounded-2xl border-2 p-4 text-base font-bold transition-colors"
                 >
-                  <RadioGroupItem id={method.value} value={method.value} />
+                  <span className="text-4xl">{method.emoji}</span>
                   {method.label}
+                  <RadioGroupItem id={method.value} value={method.value} className="sr-only" />
                 </Label>
               ))}
             </RadioGroup>
             {errors.paymentMethod && (
-              <p className="text-destructive text-sm">{errors.paymentMethod}</p>
+              <p className="text-destructive text-sm font-semibold">{errors.paymentMethod}</p>
             )}
-          </div>
+          </section>
 
-          {formError && <p className="text-destructive text-sm">{formError}</p>}
+          {formError && (
+            <p className="bg-destructive/10 text-destructive rounded-2xl p-3 text-sm font-semibold">
+              {formError}
+            </p>
+          )}
+        </div>
 
-          <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-            {submitting ? "Enviando..." : "Confirmar pedido"}
+        <div className="bg-card border-t p-4 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)]">
+          <Button
+            type="submit"
+            size="lg"
+            className="h-16 w-full justify-between rounded-full px-6 text-xl font-black"
+            disabled={submitting}
+          >
+            <span>{submitting ? "Enviando..." : "Confirmar pedido"}</span>
+            <span>{formatCurrency(subtotal)}</span>
           </Button>
-        </form>
-      </div>
+        </div>
+      </form>
     </main>
   );
 }
