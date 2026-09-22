@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Check, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
@@ -15,112 +14,165 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/cart-context";
 import { formatCurrency } from "@/lib/format";
+import { CATEGORY_VISUALS, productEmoji } from "@/lib/visuals";
 
-export function CartSheet() {
-  const { lines, subtotal, itemCount, updateQuantity, removeLine, requestCheckoutGate } =
-    useCart();
+const STEPS = CATEGORY_VISUALS.filter((c) => c.slug !== "combos");
+
+export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
+  const { lines, subtotal, itemCount, updateQuantity, removeLine, requestCheckoutGate } = useCart();
   const [open, setOpen] = useState(false);
+  const [bump, setBump] = useState(0);
   const router = useRouter();
+  const previous = useRef(itemCount);
+
+  useEffect(() => {
+    if (itemCount !== previous.current) {
+      previous.current = itemCount;
+      setBump((b) => b + 1);
+    }
+  }, [itemCount]);
+
+  const has = (slug: string) =>
+    lines.some((l) => l.categorySlug === slug || l.categorySlug === "combos");
+  const done = STEPS.filter((s) => has(s.slug)).length;
 
   function handleCheckout() {
-    const canProceed = requestCheckoutGate();
-    if (canProceed) {
-      setOpen(false);
-      router.push("/checkout");
-    } else {
-      setOpen(false);
-    }
+    setOpen(false);
+    if (requestCheckoutGate()) router.push("/checkout");
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button size="lg" className="relative gap-2">
-          <ShoppingCart className="size-5" />
-          Carrinho
-          {itemCount > 0 && (
-            <Badge className="absolute -right-2 -top-2 h-6 min-w-6 justify-center rounded-full px-1">
-              {itemCount}
-            </Badge>
-          )}
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="flex w-full flex-col sm:max-w-md">
+      <div className="bg-card border-t px-4 pt-3 pb-4 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)]">
+        <div className="mb-3 flex items-center gap-2">
+          {STEPS.map((step) => {
+            const ok = has(step.slug);
+            return (
+              <button
+                key={step.slug}
+                type="button"
+                onClick={() => onJump?.(step.slug)}
+                className={`flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-sm font-bold transition-colors ${
+                  ok ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {ok ? <Check className="size-4" /> : <span>{step.emoji}</span>}
+                <span className="hidden min-[420px]:inline">{step.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-muted-foreground mb-2 text-center text-xs font-medium">
+          {done === STEPS.length
+            ? "Pedido completo! Bom apetite 🎉"
+            : `${done} de ${STEPS.length} — complete seu pedido`}
+        </p>
+
+        <SheetTrigger asChild>
+          <Button
+            size="lg"
+            disabled={lines.length === 0}
+            className="h-16 w-full justify-between rounded-full px-6 text-xl font-black"
+          >
+            <span className="flex items-center gap-3">
+              <span key={bump} className="animate-pop relative">
+                <ShoppingBag className="size-7" />
+                <span className="absolute -top-2 -right-3 flex size-6 items-center justify-center rounded-full bg-yellow-300 text-sm font-black text-red-700">
+                  {itemCount}
+                </span>
+              </span>
+              <span className="pl-2">Ver pedido</span>
+            </span>
+            <span>{formatCurrency(subtotal)}</span>
+          </Button>
+        </SheetTrigger>
+      </div>
+
+      <SheetContent
+        side="bottom"
+        className="mx-auto flex !h-[85dvh] max-h-[85dvh] w-full max-w-[calc(100dvh*9/16)] flex-col overflow-hidden rounded-t-[2rem]"
+      >
         <SheetHeader>
-          <SheetTitle>Seu pedido</SheetTitle>
-          <SheetDescription>Revise os itens antes de finalizar.</SheetDescription>
+          <SheetTitle className="text-2xl font-black">Seu pedido</SheetTitle>
+          <SheetDescription>Ajuste as quantidades antes de finalizar.</SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="min-h-0 flex-1 px-4">
           {lines.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              Seu carrinho está vazio.
-            </p>
+            <p className="text-muted-foreground py-10 text-center">Seu carrinho está vazio.</p>
           ) : (
-            <ul className="space-y-4 pb-4">
+            <ul className="space-y-3 pb-4">
               {lines.map((line) => (
-                <li key={line.key} className="flex items-start justify-between gap-3">
+                <li key={line.key} className="bg-muted/60 flex items-center gap-3 rounded-2xl p-3">
+                  <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white text-3xl">
+                    {line.type === "COMBO" ? "🔥" : productEmoji(line.name, line.categorySlug)}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{line.name}</p>
-                    <p className="text-muted-foreground text-sm">
-                      {formatCurrency(line.unitPrice)} un.
+                    <p className="truncate text-base font-extrabold">{line.name}</p>
+                    <p className="text-sm font-bold text-red-600">
+                      {formatCurrency(line.unitPrice * line.quantity)}
                     </p>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-1 flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="size-7"
-                        onClick={() => updateQuantity(line.key, line.quantity - 1)}
-                        disabled={line.quantity <= 1}
+                        className="size-10 rounded-full"
+                        onClick={() =>
+                          line.quantity <= 1
+                            ? removeLine(line.key)
+                            : updateQuantity(line.key, line.quantity - 1)
+                        }
                         aria-label="Diminuir quantidade"
                       >
-                        <Minus className="size-3" />
+                        <Minus className="size-4" />
                       </Button>
-                      <span className="w-6 text-center text-sm">{line.quantity}</span>
+                      <span className="w-6 text-center text-lg font-black">{line.quantity}</span>
                       <Button
-                        variant="outline"
                         size="icon"
-                        className="size-7"
+                        className="size-10 rounded-full"
                         onClick={() => updateQuantity(line.key, line.quantity + 1)}
                         aria-label="Aumentar quantidade"
                       >
-                        <Plus className="size-3" />
+                        <Plus className="size-4" />
                       </Button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className="font-medium">
-                      {formatCurrency(line.unitPrice * line.quantity)}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive size-7"
-                      onClick={() => removeLine(line.key)}
-                      aria-label="Remover item"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive size-11 shrink-0"
+                    onClick={() => removeLine(line.key)}
+                    aria-label="Remover item"
+                  >
+                    <Trash2 className="size-5" />
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
         </ScrollArea>
 
-        <Separator />
-        <SheetFooter className="gap-2">
-          <div className="flex items-center justify-between text-lg font-semibold">
+        <SheetFooter className="gap-3 border-t">
+          <div className="flex items-center justify-between text-2xl font-black">
             <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span className="text-red-600">{formatCurrency(subtotal)}</span>
           </div>
-          <Button variant="outline" size="lg" onClick={() => setOpen(false)}>
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-14 rounded-full text-lg font-bold"
+            onClick={() => setOpen(false)}
+          >
             Continuar comprando
           </Button>
-          <Button size="lg" disabled={lines.length === 0} onClick={handleCheckout}>
+          <Button
+            size="lg"
+            className="h-16 rounded-full text-xl font-black"
+            disabled={lines.length === 0}
+            onClick={handleCheckout}
+          >
             Finalizar pedido
           </Button>
         </SheetFooter>
