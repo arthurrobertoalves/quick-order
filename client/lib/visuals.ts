@@ -2,15 +2,14 @@ export interface CategoryVisual {
   slug: string;
   label: string;
   emoji: string;
-  gradient: string;
 }
 
 export const CATEGORY_VISUALS: CategoryVisual[] = [
-  { slug: "combos", label: "Combos", emoji: "🔥", gradient: "from-orange-500 to-red-500" },
-  { slug: "lanches", label: "Lanches", emoji: "🍔", gradient: "from-amber-400 to-orange-500" },
-  { slug: "acompanhamentos", label: "Batatas", emoji: "🍟", gradient: "from-yellow-300 to-amber-400" },
-  { slug: "bebidas", label: "Bebidas", emoji: "🥤", gradient: "from-sky-400 to-blue-500" },
-  { slug: "sobremesas", label: "Doces", emoji: "🍦", gradient: "from-pink-400 to-rose-500" },
+  { slug: "combos", label: "Combos", emoji: "🔥" },
+  { slug: "lanches", label: "Lanches", emoji: "🍔" },
+  { slug: "acompanhamentos", label: "Batatas", emoji: "🍟" },
+  { slug: "bebidas", label: "Bebidas", emoji: "🥤" },
+  { slug: "sobremesas", label: "Doces", emoji: "🍦" },
 ];
 
 const PRODUCT_EMOJI: Record<string, string> = {
@@ -36,8 +35,4 @@ export function productEmoji(name: string, categorySlug: string) {
     CATEGORY_VISUALS.find((c) => c.slug === categorySlug)?.emoji ??
     "🍽️"
   );
-}
-
-export function categoryVisual(slug: string) {
-  return CATEGORY_VISUALS.find((c) => c.slug === slug) ?? CATEGORY_VISUALS[1];
 }

@@ -5,80 +5,67 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/cart-context";
 import { formatCurrency } from "@/lib/format";
-import { categoryVisual, productEmoji } from "@/lib/visuals";
+import { productEmoji } from "@/lib/visuals";
 import type { Product } from "@/lib/types";
 
-export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+export function ProductCard({ product }: { product: Product }) {
   const { lines, addProduct, updateQuantity, removeLine } = useCart();
   const line = lines.find((l) => l.key === `product-${product.id}`);
-  const visual = categoryVisual(product.category.slug);
 
   return (
-    <div
-      className="animate-slide-up bg-card flex flex-col overflow-hidden rounded-3xl border shadow-sm"
-      style={{ animationDelay: `${index * 60}ms` }}
-    >
-      <div
-        className={`relative flex h-[clamp(6rem,15dvh,9rem)] items-center justify-center bg-gradient-to-br ${visual.gradient}`}
-      >
-        <span className="text-[clamp(3.5rem,9dvh,5.5rem)] drop-shadow-lg">
+    <div className="bg-card flex flex-col overflow-hidden rounded-2xl border">
+      <div className="flex items-start justify-between gap-2 p-3 pb-0">
+        <span className="bg-muted flex size-11 shrink-0 items-center justify-center rounded-full text-2xl">
           {productEmoji(product.name, product.category.slug)}
         </span>
         {product.upgradeTo && (
-          <Badge className="absolute top-2 left-2 bg-white/90 text-neutral-800">Tem maior</Badge>
-        )}
-        {line && (
-          <span
-            key={line.quantity}
-            className="animate-pop absolute top-2 right-2 flex size-8 items-center justify-center rounded-full bg-white text-base font-black text-red-600"
-          >
-            {line.quantity}
-          </span>
+          <Badge variant="secondary" className="text-xs font-medium">
+            Tem maior
+          </Badge>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="text-lg leading-tight font-extrabold">{product.name}</h3>
+      <div className="flex flex-1 flex-col gap-1 p-3 pt-2">
+        <h3 className="text-base leading-tight font-semibold">{product.name}</h3>
         {product.description && (
           <p className="text-muted-foreground line-clamp-2 text-xs leading-snug">
             {product.description}
           </p>
         )}
-        <p className="mt-auto pt-1 text-2xl font-black text-red-600">
-          {formatCurrency(product.price)}
-        </p>
+        <p className="mt-2 text-lg font-bold text-red-700">{formatCurrency(product.price)}</p>
       </div>
 
       <div className="p-3 pt-0">
         {line ? (
-          <div className="flex items-center justify-between rounded-full bg-red-50 p-1">
+          <div className="flex items-center justify-between rounded-full border p-1">
             <Button
               size="icon"
-              variant="outline"
-              className="size-12 rounded-full bg-white"
+              variant="ghost"
+              className="size-9 rounded-full"
               aria-label="Diminuir quantidade"
               onClick={() =>
                 line.quantity <= 1 ? removeLine(line.key) : updateQuantity(line.key, line.quantity - 1)
               }
             >
-              <Minus className="size-5" />
+              <Minus className="size-4" />
             </Button>
-            <span className="text-xl font-black">{line.quantity}</span>
+            <span className="text-base font-semibold">{line.quantity}</span>
             <Button
               size="icon"
-              className="size-12 rounded-full"
+              className="size-9 rounded-full"
               aria-label="Aumentar quantidade"
               onClick={() => addProduct(product, 1)}
             >
-              <Plus className="size-5" />
+              <Plus className="size-4" />
             </Button>
           </div>
         ) : (
           <Button
-            className="h-14 w-full rounded-full text-lg font-bold"
+            variant="outline"
+            className="hover:bg-primary hover:text-primary-foreground h-11 w-full rounded-full font-semibold"
             onClick={() => addProduct(product, 1)}
           >
-            <Plus className="size-5" /> Adicionar
+            <Plus className="size-4" /> Adicionar
           </Button>
         )}
       </div>

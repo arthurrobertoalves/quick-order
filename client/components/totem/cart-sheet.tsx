@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,16 +23,7 @@ const STEPS = CATEGORY_VISUALS.filter((c) => c.slug !== "combos");
 export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
   const { lines, subtotal, itemCount, updateQuantity, removeLine, requestCheckoutGate } = useCart();
   const [open, setOpen] = useState(false);
-  const [bump, setBump] = useState(0);
   const router = useRouter();
-  const previous = useRef(itemCount);
-
-  useEffect(() => {
-    if (itemCount !== previous.current) {
-      previous.current = itemCount;
-      setBump((b) => b + 1);
-    }
-  }, [itemCount]);
 
   const has = (slug: string) =>
     lines.some((l) => l.categorySlug === slug || l.categorySlug === "combos");
@@ -45,7 +36,7 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <div className="bg-card border-t px-4 pt-3 pb-4 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)]">
+      <div className="bg-card border-t px-4 pt-3 pb-4">
         <div className="mb-3 flex items-center gap-2">
           {STEPS.map((step) => {
             const ok = has(step.slug);
@@ -54,8 +45,8 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
                 key={step.slug}
                 type="button"
                 onClick={() => onJump?.(step.slug)}
-                className={`flex flex-1 items-center justify-center gap-1 rounded-full py-2 text-sm font-bold transition-colors ${
-                  ok ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+                className={`flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 text-sm font-medium transition-colors ${
+                  ok ? "bg-green-50 text-green-700" : "bg-muted text-muted-foreground"
                 }`}
               >
                 {ok ? <Check className="size-4" /> : <span>{step.emoji}</span>}
@@ -64,9 +55,9 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
             );
           })}
         </div>
-        <p className="text-muted-foreground mb-2 text-center text-xs font-medium">
+        <p className="text-muted-foreground mb-2 text-center text-xs">
           {done === STEPS.length
-            ? "Pedido completo! Bom apetite 🎉"
+            ? "Pedido completo — bom apetite!"
             : `${done} de ${STEPS.length} — complete seu pedido`}
         </p>
 
@@ -74,16 +65,18 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
           <Button
             size="lg"
             disabled={lines.length === 0}
-            className="h-16 w-full justify-between rounded-full px-6 text-xl font-black"
+            className="h-14 w-full justify-between rounded-full px-5 text-base font-semibold"
           >
-            <span className="flex items-center gap-3">
-              <span key={bump} className="animate-pop relative">
-                <ShoppingBag className="size-7" />
-                <span className="absolute -top-2 -right-3 flex size-6 items-center justify-center rounded-full bg-yellow-300 text-sm font-black text-red-700">
-                  {itemCount}
-                </span>
+            <span className="flex items-center gap-2">
+              <span className="relative">
+                <ShoppingBag className="size-5" />
+                {itemCount > 0 && (
+                  <span className="bg-primary-foreground text-primary absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-bold">
+                    {itemCount}
+                  </span>
+                )}
               </span>
-              <span className="pl-2">Ver pedido</span>
+              Ver pedido
             </span>
             <span>{formatCurrency(subtotal)}</span>
           </Button>
@@ -92,10 +85,10 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
 
       <SheetContent
         side="bottom"
-        className="mx-auto flex !h-[85dvh] max-h-[85dvh] w-full max-w-[calc(100dvh*9/16)] flex-col overflow-hidden rounded-t-[2rem]"
+        className="mx-auto flex !h-[85dvh] max-h-[85dvh] w-full max-w-[calc(100dvh*9/16)] flex-col overflow-hidden rounded-t-2xl"
       >
         <SheetHeader>
-          <SheetTitle className="text-2xl font-black">Seu pedido</SheetTitle>
+          <SheetTitle>Seu pedido</SheetTitle>
           <SheetDescription>Ajuste as quantidades antes de finalizar.</SheetDescription>
         </SheetHeader>
 
@@ -103,22 +96,22 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
           {lines.length === 0 ? (
             <p className="text-muted-foreground py-10 text-center">Seu carrinho está vazio.</p>
           ) : (
-            <ul className="space-y-3 pb-4">
+            <ul className="space-y-2 pb-4">
               {lines.map((line) => (
-                <li key={line.key} className="bg-muted/60 flex items-center gap-3 rounded-2xl p-3">
-                  <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white text-3xl">
+                <li key={line.key} className="bg-muted/50 flex items-center gap-3 rounded-xl p-3">
+                  <span className="bg-background flex size-11 shrink-0 items-center justify-center rounded-full text-xl">
                     {line.type === "COMBO" ? "🔥" : productEmoji(line.name, line.categorySlug)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-extrabold">{line.name}</p>
-                    <p className="text-sm font-bold text-red-600">
+                    <p className="truncate text-sm font-semibold">{line.name}</p>
+                    <p className="text-sm font-semibold text-red-700">
                       {formatCurrency(line.unitPrice * line.quantity)}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="size-10 rounded-full"
+                        className="size-8 rounded-full"
                         onClick={() =>
                           line.quantity <= 1
                             ? removeLine(line.key)
@@ -126,27 +119,27 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
                         }
                         aria-label="Diminuir quantidade"
                       >
-                        <Minus className="size-4" />
+                        <Minus className="size-3.5" />
                       </Button>
-                      <span className="w-6 text-center text-lg font-black">{line.quantity}</span>
+                      <span className="w-5 text-center text-sm font-semibold">{line.quantity}</span>
                       <Button
                         size="icon"
-                        className="size-10 rounded-full"
+                        className="size-8 rounded-full"
                         onClick={() => updateQuantity(line.key, line.quantity + 1)}
                         aria-label="Aumentar quantidade"
                       >
-                        <Plus className="size-4" />
+                        <Plus className="size-3.5" />
                       </Button>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive size-11 shrink-0"
+                    className="text-destructive size-9 shrink-0"
                     onClick={() => removeLine(line.key)}
                     aria-label="Remover item"
                   >
-                    <Trash2 className="size-5" />
+                    <Trash2 className="size-4" />
                   </Button>
                 </li>
               ))}
@@ -155,21 +148,21 @@ export function CartBar({ onJump }: { onJump?: (slug: string) => void }) {
         </ScrollArea>
 
         <SheetFooter className="gap-3 border-t">
-          <div className="flex items-center justify-between text-2xl font-black">
+          <div className="flex items-center justify-between text-lg font-semibold">
             <span>Subtotal</span>
-            <span className="text-red-600">{formatCurrency(subtotal)}</span>
+            <span className="text-red-700">{formatCurrency(subtotal)}</span>
           </div>
           <Button
             variant="outline"
             size="lg"
-            className="h-14 rounded-full text-lg font-bold"
+            className="h-12 rounded-full font-medium"
             onClick={() => setOpen(false)}
           >
             Continuar comprando
           </Button>
           <Button
             size="lg"
-            className="h-16 rounded-full text-xl font-black"
+            className="h-14 rounded-full text-base font-semibold"
             disabled={lines.length === 0}
             onClick={handleCheckout}
           >

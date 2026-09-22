@@ -52,11 +52,13 @@ export function SuggestionDialog() {
 
   return (
     <AlertDialog open={suggestion !== null}>
-      <AlertDialogContent className="rounded-3xl">
+      <AlertDialogContent className="rounded-2xl">
         <AlertDialogHeader className="items-center text-center">
-          <span className="animate-pop text-7xl">{emoji}</span>
-          <AlertDialogTitle className="text-3xl font-black">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-base">{description}</AlertDialogDescription>
+          <span className="bg-muted mb-1 flex size-14 items-center justify-center rounded-full text-3xl">
+            {emoji}
+          </span>
+          <AlertDialogTitle className="text-xl font-semibold">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm">{description}</AlertDialogDescription>
         </AlertDialogHeader>
 
         {suggestion?.kind === "dessert" && (
@@ -65,16 +67,16 @@ export function SuggestionDialog() {
               <Button
                 key={dessert.id}
                 variant="outline"
-                className="h-auto flex-col gap-1 rounded-2xl py-3"
+                className="h-auto flex-col gap-1 rounded-xl py-3"
                 onClick={() => {
                   addProduct(dessert, 1);
                   dismissSuggestion();
                   router.push("/checkout");
                 }}
               >
-                <span className="text-4xl">{productEmoji(dessert.name, "sobremesas")}</span>
-                <span className="text-sm font-bold">{dessert.name}</span>
-                <span className="text-sm font-black text-red-600">
+                <span className="text-2xl">{productEmoji(dessert.name, "sobremesas")}</span>
+                <span className="text-xs font-medium">{dessert.name}</span>
+                <span className="text-xs font-semibold text-red-700">
                   +{formatCurrency(dessert.price)}
                 </span>
               </Button>
@@ -84,12 +86,12 @@ export function SuggestionDialog() {
 
         <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
           {suggestion?.kind !== "dessert" && (
-            <AlertDialogAction className="h-14 rounded-full text-lg font-black" onClick={acceptSuggestion}>
+            <AlertDialogAction className="h-12 rounded-full font-semibold" onClick={acceptSuggestion}>
               {acceptLabel}
             </AlertDialogAction>
           )}
           <AlertDialogCancel
-            className="h-12 rounded-full text-base font-semibold"
+            className="h-11 rounded-full font-medium"
             onClick={() => {
               dismissSuggestion();
               if (suggestion?.kind === "dessert") router.push("/checkout");

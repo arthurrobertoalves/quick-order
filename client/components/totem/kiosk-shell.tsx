@@ -82,8 +82,8 @@ export function KioskShell({ children }: { children: React.ReactNode }) {
       <AlertDialog open={warning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl">Ainda está aí? 👀</AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
+            <AlertDialogTitle>Ainda está aí?</AlertDialogTitle>
+            <AlertDialogDescription>
               {lines.length > 0
                 ? `Seu pedido será cancelado em ${secondsLeft}s por inatividade.`
                 : `Voltando ao início em ${secondsLeft}s.`}

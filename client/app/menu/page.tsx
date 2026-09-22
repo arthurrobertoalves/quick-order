@@ -35,23 +35,21 @@ function MenuContent() {
             <TabsTrigger
               key={c.slug}
               value={c.slug}
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-auto min-w-[5.2rem] shrink-0 flex-col gap-0.5 rounded-2xl px-3 py-2 text-sm font-bold data-[state=active]:shadow-md"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground h-auto min-w-[5rem] shrink-0 flex-col gap-0.5 rounded-xl px-3 py-2 text-xs font-medium"
             >
-              <span className="text-3xl leading-none">{c.emoji}</span>
+              <span className="text-2xl leading-none">{c.emoji}</span>
               {c.label}
             </TabsTrigger>
           ))}
         </TabsList>
 
         <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-          <h2 className="mb-3 text-2xl font-black">
-            {current.emoji} {current.label}
-          </h2>
+          <h2 className="mb-3 text-lg font-semibold">{current.label}</h2>
 
           {catalog.loading ? (
             <div className="grid grid-cols-2 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-64 rounded-3xl" />
+                <Skeleton key={i} className="h-56 rounded-2xl" />
               ))}
             </div>
           ) : catalog.products.length === 0 ? (
@@ -61,8 +59,8 @@ function MenuContent() {
           ) : (
             <>
               <TabsContent value="combos" className="flex flex-col gap-3">
-                {catalog.combos.map((combo, i) => (
-                  <ComboCard key={combo.id} combo={combo} index={i} />
+                {catalog.combos.map((combo) => (
+                  <ComboCard key={combo.id} combo={combo} />
                 ))}
               </TabsContent>
               {CATEGORY_VISUALS.filter((c) => c.slug !== "combos").map((c) => (
@@ -70,8 +68,8 @@ function MenuContent() {
                   <div className="grid grid-cols-2 gap-3">
                     {catalog.products
                       .filter((p) => p.category.slug === c.slug)
-                      .map((product, i) => (
-                        <ProductCard key={product.id} product={product} index={i} />
+                      .map((product) => (
+                        <ProductCard key={product.id} product={product} />
                       ))}
                   </div>
                 </TabsContent>
